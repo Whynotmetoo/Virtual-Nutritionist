@@ -1,70 +1,125 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
+import React from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { StyleSheet, View, TextInput, FlatList, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
-export default function HomeScreen() {
+const presets = ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Diet Tips'];
+
+export default function VirtualNutritionistChat() {
+  const [messages, setMessages] = React.useState([]);
+  const [inputValue, setInputValue] = React.useState('');
+
+  const sendMessage = () => {
+    if (inputValue.trim()) {
+      setMessages([...messages, { text: inputValue, sender: 'user' }]);
+      setInputValue('');
+      // Here you would also call the AI API to get a response
+    }
+  };
+
+  const renderItem = ({ item }) => (
+    <View style={item.sender === 'user' ? styles.userMessage : styles.aiMessage}>
+      <ThemedText>{item.text}</ThemedText>
+    </View>
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <ThemedView style={styles.container}>
+      <View style={styles.header}>
+        <Ionicons name="happy-outline" size={24} style={styles.aiIcon} />
+        <ThemedText>AI is Online</ThemedText>
+      </View>
+
+      <FlatList
+        data={messages}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => index.toString()}
+        style={styles.chatList}
+        inverted // To show the latest message at the bottom
+      />
+
+      <View style={styles.presetContainer}>
+        {presets.map((preset, index) => (
+          <TouchableOpacity key={index} style={styles.presetButton} onPress={() => setInputValue(preset)}>
+            <ThemedText>{preset}</ThemedText>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          value={inputValue}
+          onChangeText={setInputValue}
+          placeholder="Type your message..."
+          onSubmitEditing={sendMessage}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <TouchableOpacity onPress={sendMessage}>
+          <Ionicons name="send" size={24} style={styles.sendButton} />
+        </TouchableOpacity>
+      </View>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 16,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  aiIcon: {
+    marginRight: 8,
+    color: '#4CAF50', // Example color for online status
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  chatList: {
+    flex: 1,
+    marginBottom: 16,
+  },
+  userMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#e1ffc7',
+    borderRadius: 8,
+    padding: 10,
+    marginVertical: 4,
+  },
+  aiMessage: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f1f1f1',
+    borderRadius: 8,
+    padding: 10,
+    marginVertical: 4,
+  },
+  presetContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 16,
+  },
+  presetButton: {
+    backgroundColor: '#d0d0d0',
+    borderRadius: 20,
+    padding: 8,
+    margin: 4,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 20,
+    padding: 10,
+    marginRight: 8,
+  },
+  sendButton: {
+    color: '#4CAF50',
   },
 });
