@@ -2,6 +2,8 @@
     "cSpell.words": [
         "dotenv",
         "httpx",
+        "passlib",
+        "pydantic",
         "uvicorn"
     ]
 }
