@@ -1,6 +1,6 @@
-"fastapi[standard]"
+fastapi[standard]
 # uvicorn
 httpx
 python-dotenv
 passlib
-"pymongo[srv]"
+pymongo[srv]
