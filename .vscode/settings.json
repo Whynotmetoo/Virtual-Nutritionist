@@ -4,6 +4,7 @@
         "httpx",
         "passlib",
         "pydantic",
+        "pymongo",
         "uvicorn"
     ]
 }
