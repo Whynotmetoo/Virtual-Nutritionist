@@ -3,11 +3,14 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, View, TextInput, FlatList, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const presets = ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Diet Tips'];
 
 export default function VirtualNutritionistChat() {
-  const [messages, setMessages] = React.useState([]);
+  const insets = useSafeAreaInsets();
+  const [messages, setMessages] = React.useState<{text: String, sender: string}[]>([]);
   const [inputValue, setInputValue] = React.useState('');
 
   const sendMessage = () => {
@@ -19,17 +22,40 @@ export default function VirtualNutritionistChat() {
   };
 
   const renderItem = ({ item }) => (
-    <View style={item.sender === 'user' ? styles.userMessage : styles.aiMessage}>
-      <ThemedText>{item.text}</ThemedText>
+    <View style={[
+      styles.messageWrapper,
+      item.sender === 'user' ? styles.userMessageWrapper : styles.aiMessageWrapper
+    ]}>
+      {item.sender === 'ai' && (
+        <View style={styles.avatarContainer}>
+          <Ionicons name="nutrition-outline" size={20} color="#fff" />
+        </View>
+      )}
+      <View style={[
+        item.sender === 'user' ? styles.userMessage : styles.aiMessage,
+        styles.messageShadow
+      ]}>
+        <ThemedText style={item.sender === 'user' ? styles.userText : styles.aiText}>
+          {item.text}
+        </ThemedText>
+      </View>
     </View>
   );
 
   return (
-    <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons name="happy-outline" size={24} style={styles.aiIcon} />
-        <ThemedText>AI is Online</ThemedText>
-      </View>
+    <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
+      <LinearGradient
+        colors={['#4CAF50', '#45a049']}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <Ionicons name="nutrition" size={24} color="#fff" />
+          <View style={styles.headerTextContainer}>
+            <ThemedText style={styles.headerTitle}>AI Nutritionist</ThemedText>
+            <ThemedText style={styles.headerSubtitle}>Online</ThemedText>
+          </View>
+        </View>
+      </LinearGradient>
 
       <FlatList
         data={messages}
@@ -37,14 +63,29 @@ export default function VirtualNutritionistChat() {
         keyExtractor={(item, index) => index.toString()}
         style={styles.chatList}
         inverted // To show the latest message at the bottom
+        contentContainerStyle={styles.chatListContent}
       />
 
       <View style={styles.presetContainer}>
-        {presets.map((preset, index) => (
-          <TouchableOpacity key={index} style={styles.presetButton} onPress={() => setInputValue(preset)}>
-            <ThemedText>{preset}</ThemedText>
-          </TouchableOpacity>
-        ))}
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={presets}
+          renderItem={({ item }) => (
+            <TouchableOpacity 
+              style={styles.presetButton} 
+              onPress={() => setInputValue(item)}
+            >
+              <LinearGradient
+                colors={['#4CAF50', '#45a049']}
+                style={styles.presetGradient}
+              >
+                <ThemedText style={styles.presetText}>{item}</ThemedText>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+          keyExtractor={(item) => item}
+        />
       </View>
 
       <View style={styles.inputContainer}>
@@ -52,11 +93,20 @@ export default function VirtualNutritionistChat() {
           style={styles.input}
           value={inputValue}
           onChangeText={setInputValue}
-          placeholder="Type your message..."
+          placeholder="Ask about nutrition..."
+          placeholderTextColor="#999"
           onSubmitEditing={sendMessage}
         />
-        <TouchableOpacity onPress={sendMessage}>
-          <Ionicons name="send" size={24} style={styles.sendButton} />
+        <TouchableOpacity 
+          onPress={sendMessage}
+          style={styles.sendButtonContainer}
+        >
+          <LinearGradient
+            colors={['#4CAF50', '#45a049']}
+            style={styles.sendButtonGradient}
+          >
+            <Ionicons name="send" size={20} color="#fff" />
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </ThemedView>
@@ -66,60 +116,124 @@ export default function VirtualNutritionistChat() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
   },
   header: {
+    padding: 16,
+    paddingBottom: 20,
+  },
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
   },
-  aiIcon: {
+  headerTextContainer: {
+    marginLeft: 12,
+  },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  headerSubtitle: {
+    color: '#fff',
+    fontSize: 12,
+    opacity: 0.8,
+  },
+  chatListContent: {
+    padding: 16,
+  },
+  messageWrapper: {
+    flexDirection: 'row',
+    marginVertical: 4,
+    alignItems: 'flex-end',
+  },
+  userMessageWrapper: {
+    justifyContent: 'flex-end',
+  },
+  aiMessageWrapper: {
+    justifyContent: 'flex-start',
+  },
+  avatarContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#4CAF50',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 8,
-    color: '#4CAF50', // Example color for online status
-  },
-  chatList: {
-    flex: 1,
-    marginBottom: 16,
   },
   userMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#e1ffc7',
-    borderRadius: 8,
-    padding: 10,
-    marginVertical: 4,
+    maxWidth: '80%',
+    backgroundColor: '#4CAF50',
+    borderRadius: 20,
+    borderBottomRightRadius: 4,
+    padding: 12,
   },
   aiMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#f1f1f1',
-    borderRadius: 8,
-    padding: 10,
-    marginVertical: 4,
+    maxWidth: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    borderBottomLeftRadius: 4,
+    padding: 12,
+  },
+  messageShadow: {
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  userText: {
+    color: '#fff',
+  },
+  aiText: {
+    color: '#333',
   },
   presetContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     marginBottom: 16,
+    paddingHorizontal: 16,
   },
   presetButton: {
-    backgroundColor: '#d0d0d0',
+    marginRight: 8,
+  },
+  presetGradient: {
     borderRadius: 20,
-    padding: 8,
-    margin: 4,
+    padding: 10,
+  },
+  presetText: {
+    color: '#fff',
+    fontSize: 13,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 16,
+    paddingTop: 8,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 20,
-    padding: 10,
-    marginRight: 8,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginRight: 12,
+    fontSize: 15,
   },
-  sendButton: {
-    color: '#4CAF50',
+  sendButtonContainer: {
+    width: 44,
+    height: 44,
+  },
+  sendButtonGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
