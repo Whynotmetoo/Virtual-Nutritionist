@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { View, TextInput, StyleSheet, Pressable, ScrollView, Switch } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
