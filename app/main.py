@@ -2,6 +2,8 @@ from fastapi import Depends, FastAPI
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
+
 import os
 import logging
 
@@ -13,10 +15,27 @@ from .dependencies import get_query_token, get_token_header
 from .internal import admin
 from .routers import items, users
 
+
+# CORS settings
+origins = [
+    "http://localhost:8081",  # Allow requests from your local development server
+    "https://your-frontend-app.com",  # Allow requests from your deployed frontend (if any)
+]
+
+
+
 # dependencies=[Depends(get_query_token)]
 app = FastAPI()
 
 load_dotenv()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # List of allowed origins
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],  # Specify allowed HTTP methods
+    allow_headers=["X-Custom-Header", "Content-Type"],  # Specify allowed headers
+)
 
 mongo_uri = os.environ.get('MONGO_URI')
 
