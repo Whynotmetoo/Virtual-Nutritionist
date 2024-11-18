@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -96,7 +97,12 @@ export default function AccountScreen() {
             >
               <TouchableOpacity 
                 style={styles.menuItem}
-                onPress={() => {/* Navigate to respective screen */}}
+                onPress={() => {
+                  if (item.id === 'logout') {
+                    router.replace('/');
+                  }
+                  // ... handle other menu items
+                }}
               >
                 <View style={styles.menuItemLeft}>
                   <View style={[styles.iconContainer, { backgroundColor: `${item.color}15` }]}>

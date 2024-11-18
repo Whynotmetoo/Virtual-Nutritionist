@@ -44,7 +44,7 @@ export default function GoalScreen() {
 
   useEffect(() => {
     const getGoal = async () => {
-      const response = await get<{data: {weight: number, goal: number, dietary: string, cuisine: string, duration: number}}>('/preference')
+      const response = await get<{data: {weight: number, goal: number, dietary: string, cuisine: string, duration: number}}>('/preference/')
       if(response){
         const { weight, goal, dietary, cuisine, duration } = response.data
         setCurrentWeight(String(weight))
