@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 from .dependencies import get_query_token, get_token_header, connect_to_db
 from .internal import admin
-from .routers import items, users, chat
+from .routers import items, users, chat, preference
 
 
 # CORS settings
@@ -46,6 +46,7 @@ except Exception as e:
 app.include_router(users.router)
 app.include_router(items.router)
 app.include_router(chat.router)
+app.include_router(preference.router)
 app.include_router(
     admin.router,
     prefix="/admin",

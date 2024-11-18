@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 
 # import os
-from ..dependencies import connect_to_db, is_same_day
+from ..dependencies import connect_to_db, is_same_day, generate_meal_plan_prompt
 
 from ..dependencies import get_token_header
 
@@ -17,11 +17,13 @@ load_dotenv()
 client = OpenAI()
 database = connect_to_db()
 chats = "chats"
+preference = "preference"
 
 if chats not in database.list_collection_names():
     database.create_collection(chats)
 
 collection = database[chats]
+preference_collection = database[preference]
 
 router = APIRouter(
     prefix="/chat",
@@ -56,12 +58,18 @@ async def chat_current(message: Message):
     message_dict = message.model_dump()
     
     if lastest_chat is None or not is_same_day(date, lastest_chat['date']):
+        current_preference = preference_collection.find_one(sort=[("date", -1)])
+        # if (current_preference):
+        #     current_preference.pop("_id", None)
+        logger.info(current_preference['data'])
+        prompt = generate_meal_plan_prompt(current_preference['data'])
+        logger.info([prompt, message_dict])
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[message_dict]
+            messages=[prompt,message_dict]
         )
         response_content = response.choices[0].message.content
-        record = [message_dict, {"role": "assistant", "content": response_content}]
+        record = [prompt, message_dict, {"role": "assistant", "content": response_content}]
         collection.insert_one({"date": date, "records": record})
         return response_content
     else:

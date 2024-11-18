@@ -33,8 +33,7 @@ class preference_data(BaseModel):
     weight: float
     goal: float
     dietary: str
-    status: str
-    vegen: bool
+    cuisine: str
     duration: int
 
 @router.get("/test")
@@ -47,6 +46,7 @@ async def getGoal():
     if current_preference is None:
         return None
     else:
+        current_preference.pop("_id", None)
         return current_preference
 
 @router.post('/save')
@@ -59,5 +59,5 @@ async def chat_current(data: preference_data):
     if current_preference is None:
         collection.insert_one({"date": date, "data": data_dict})
     else:
-        collection.update_one({"date": date}, {"data": data_dict})
+        collection.update_one({"date": current_preference["date"]}, {"$set": {"data": data_dict}})
     return True
