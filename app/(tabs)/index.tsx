@@ -1,23 +1,62 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, View, TextInput, FlatList, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { post, get } from '@/utils/request'
+import Markdown from 'react-native-markdown-display';
 
-const presets = ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Diet Tips'];
+const presets = ['Recipe sugesstion', 'How to cook', 'Tell me ingredients'];
 
 export default function VirtualNutritionistChat() {
   const insets = useSafeAreaInsets();
   const [messages, setMessages] = React.useState<{text: String, sender: string}[]>([]);
   const [inputValue, setInputValue] = React.useState('');
+  const flatListRef = React.useRef<FlatList>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  useEffect(() => {
+    const getInfo = async () => {
+      const response = await get('/chat/test')
+      setMessages([...messages, { text: response as string, sender: 'server'}])
+    }
+    // getInfo()
+  }, [])
+
+  const getAnswer = async (message: string) => {
+    setIsLoading(true);
+    try {
+      const response = await post('/chat/current', {role: 'user', content: message})
+      setMessages(prevMessages => prevMessages.map((msg, index) => {
+        if (index === prevMessages.length - 1 && msg.sender === 'loading') {
+          return { text: response as string, sender: 'server' };
+        }
+        return msg;
+      }));
+    } catch (error) {
+      setMessages(prevMessages => prevMessages.filter(msg => msg.sender !== 'loading'));
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }
+  }, [messages]);
 
   const sendMessage = () => {
     if (inputValue.trim()) {
-      setMessages([...messages, { text: inputValue, sender: 'user' }]);
+      setMessages(prevMessages => [
+        ...prevMessages, 
+        { text: inputValue, sender: 'user' },
+        { text: 'Thinking...', sender: 'loading' }
+      ]);
       setInputValue('');
-      // Here you would also call the AI API to get a response
+      getAnswer(inputValue);
     }
   };
 
@@ -26,19 +65,49 @@ export default function VirtualNutritionistChat() {
       styles.messageWrapper,
       item.sender === 'user' ? styles.userMessageWrapper : styles.aiMessageWrapper
     ]}>
-      {item.sender === 'ai' && (
+      {(item.sender === 'server' || item.sender === 'loading') && (
         <View style={styles.avatarContainer}>
           <Ionicons name="nutrition-outline" size={20} color="#fff" />
         </View>
       )}
       <View style={[
         item.sender === 'user' ? styles.userMessage : styles.aiMessage,
-        styles.messageShadow
+        styles.messageShadow,
+        item.sender === 'loading' && styles.loadingMessage
       ]}>
-        <ThemedText style={item.sender === 'user' ? styles.userText : styles.aiText}>
-          {item.text}
-        </ThemedText>
+        {item.sender === 'server' ? (
+          <Markdown 
+            style={{
+              body: { color: '#333' },
+              link: { color: '#2196F3' },
+              code_block: { 
+                backgroundColor: '#f5f5f5',
+                padding: 8,
+                borderRadius: 4,
+              },
+              code_inline: {
+                backgroundColor: '#f5f5f5',
+                padding: 4,
+                borderRadius: 4,
+              },
+            }}
+          >
+            {item.text as string}
+          </Markdown>
+        ) : (
+          <ThemedText style={[
+            item.sender === 'user' ? styles.userText : styles.aiText,
+            item.sender === 'loading' && styles.loadingText
+          ]}>
+            {item.text}
+          </ThemedText>
+        )}
       </View>
+      {item.sender === 'user' && (
+        <View style={[styles.avatarContainer, styles.userAvatarContainer]}>
+          <Ionicons name="person" size={20} color="#fff" />
+        </View>
+      )}
     </View>
   );
 
@@ -58,11 +127,11 @@ export default function VirtualNutritionistChat() {
       </LinearGradient>
 
       <FlatList
+        ref={flatListRef}
         data={messages}
         renderItem={renderItem}
         keyExtractor={(item, index) => index.toString()}
         style={styles.chatList}
-        inverted // To show the latest message at the bottom
         contentContainerStyle={styles.chatListContent}
       />
 
@@ -120,7 +189,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-    paddingBottom: 20,
+    paddingBottom: 6,
   },
   headerContent: {
     flexDirection: 'row',
@@ -145,7 +214,8 @@ const styles = StyleSheet.create({
   messageWrapper: {
     flexDirection: 'row',
     marginVertical: 4,
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
+    gap: 8,
   },
   userMessageWrapper: {
     justifyContent: 'flex-end',
@@ -160,11 +230,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+  },
+  userAvatarContainer: {
+    backgroundColor: '#2196F3',
   },
   userMessage: {
     maxWidth: '80%',
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#2196F3',
     borderRadius: 20,
     borderBottomRightRadius: 4,
     padding: 12,
@@ -175,6 +247,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderBottomLeftRadius: 4,
     padding: 12,
+    minWidth: 200,
   },
   messageShadow: {
     shadowColor: '#000',
@@ -235,5 +308,12 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingMessage: {
+    backgroundColor: '#f0f0f0',
+  },
+  loadingText: {
+    color: '#666',
+    fontStyle: 'italic',
   },
 });

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, TextInput, StyleSheet, Pressable, ScrollView, Switch } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, TextInput, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
@@ -8,34 +8,78 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Modal from 'react-native-modal';
 
+import { post,get } from '@/utils/request'
+
 export default function GoalScreen() {
   // State variables
-  const [weightGoal, setWeightGoal] = useState('');
   const [dietPreference, setDietPreference] = useState('');
-  const [healthStatus, setHealthStatus] = useState('Healthy');
-  const [isVegan, setIsVegan] = useState(false);
   const insets = useSafeAreaInsets();
   const [isPreferenceModalVisible, setPreferenceModalVisible] = useState(false);
-  const [isHealthModalVisible, setHealthModalVisible] = useState(false);
+  const [currentWeight, setCurrentWeight] = useState('');
+  const [targetWeight, setTargetWeight] = useState('');
+  const [duration, setDuration] = useState('');
+  const [cuisineType, setCuisineType] = useState('');
+  const [isCuisineModalVisible, setCuisineModalVisible] = useState(false);
+  const [ enableEditing, setEnableEditing] = useState(false);
 
   const dietaryOptions = [
-    { label: 'Low Carb', value: 'low_carb' },
-    { label: 'High Protein', value: 'high_protein' },
-    { label: 'Vegan', value: 'vegan' },
-    { label: 'Vegetarian', value: 'vegetarian' },
+    { label: 'paleo', value: 'paleo' },
+    { label: 'keto', value: 'keto' },
+    { label: 'mediterranean', value: 'mediterranean' },
+    { label: 'vegan', value: 'vegan' },
+    { label: 'dash', value: 'dash'},
+    { lable: 'any', value: 'No preference'}
   ];
 
-  const healthOptions = [
-    { label: 'Healthy', value: 'healthy' },
-    { label: 'Underweight', value: 'underweight' },
-    { label: 'Overweight', value: 'overweight' },
-    { label: 'Diabetic', value: 'diabetic' },
-    { label: 'Hypertension', value: 'hypertension' },
+  const cuisineOptions = [
+    { label: 'American', value: 'American' },
+    { label: 'Japanese', value: 'Japanese' },
+    { label: 'French', value: 'French' },
+    { label: 'Mexican', value: 'Mexican' },
+    { label: 'Indian', value: 'Indian' },
+    { label: 'italian', value: 'italian' },
+    { label: 'Chinese', value: 'Chinese' },
+    { label: 'any', value: 'No preference'}
   ];
 
+  useEffect(() => {
+    const getGoal = async () => {
+      const response = await get<{data: {weight: number, goal: number, dietary: string, cuisine: string, duration: number}}>('/preference')
+      if(response){
+        const { weight, goal, dietary, cuisine, duration } = response.data
+        setCurrentWeight(String(weight))
+        setTargetWeight(String(goal))
+        setDietPreference(dietary)
+        setCuisineType(cuisine)
+        setDuration(String(duration))
+        setEnableEditing(false)
+      } else {
+        setEnableEditing(true)
+      }
+    }
+    getGoal()
+  }, [])
+
+  const handleSubmit = async () => {
+    const response = await post('/preference/save', {
+      weight: Number(currentWeight),
+      goal: Number(targetWeight),
+      dietary: dietPreference,
+      cuisine: cuisineType,
+      duration: Number(duration),
+    })
+    if(response){
+      Alert.alert('Success', 'Your goals have been saved successfully');
+      setEnableEditing(false)
+    }
+  }
+ 
   const handleSaveGoal = () => {
-    // Save the user's goals (can integrate with backend or state management here)
-    console.log('Goal saved:', { weightGoal, dietPreference, healthStatus, isVegan });
+    if(!enableEditing) {
+      setEnableEditing(true)
+    } else {
+      handleSubmit()
+    }
   };
 
   return (
@@ -46,20 +90,37 @@ export default function GoalScreen() {
           <ThemedText style={styles.subtitle}>Customize your health journey</ThemedText>
         </Animated.View>
 
-        {/* Weight Loss Goal Card */}
+        {/* Weight Goals Card */}
         <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.card}>
           <View style={styles.labelContainer}>
             <MaterialCommunityIcons name="scale-bathroom" size={24} color="#6200EE" />
-            <ThemedText style={styles.label}>Weight Goal (kg)</ThemedText>
+            <ThemedText style={styles.label}>Weight Goals</ThemedText>
           </View>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            placeholder="Enter your target weight"
-            value={weightGoal}
-            onChangeText={setWeightGoal}
-            placeholderTextColor="#999"
-          />
+          <View style={styles.weightInputContainer}>
+            <View style={styles.weightInput}>
+              <ThemedText style={styles.weightLabel}>Current (kg)</ThemedText>
+              <TextInput
+                style={[styles.input, !enableEditing && styles.disabledInput]}
+                keyboardType="numeric"
+                placeholder="Current weight"
+                value={currentWeight}
+                onChangeText={setCurrentWeight}
+                placeholderTextColor="#999"
+                editable={enableEditing}
+              />
+            </View>
+            <View style={styles.weightInput}>
+              <ThemedText style={styles.weightLabel}>Target (kg)</ThemedText>
+              <TextInput
+                style={[styles.input, !enableEditing && styles.disabledInput]}
+                keyboardType="numeric"
+                placeholder="Target weight"
+                value={targetWeight}
+                onChangeText={setTargetWeight}
+                placeholderTextColor="#999"
+              />
+            </View>
+          </View>
         </Animated.View>
 
         {/* Dietary Preferences Card */}
@@ -69,8 +130,8 @@ export default function GoalScreen() {
             <ThemedText style={styles.label}>Dietary Preferences</ThemedText>
           </View>
           <Pressable 
-            style={styles.selectButton}
-            onPress={() => setPreferenceModalVisible(true)}
+            style={[styles.selectButton, !enableEditing && styles.disabledButton]}
+            onPress={() => enableEditing && setPreferenceModalVisible(true)}
           >
             <ThemedText style={styles.selectButtonText}>
               {dietPreference ? dietaryOptions.find(opt => opt.value === dietPreference)?.label : 'Select preference'}
@@ -79,36 +140,40 @@ export default function GoalScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* Health Status Card */}
+        {/* Cuisine Type Card */}
         <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.card}>
           <View style={styles.labelContainer}>
-            <MaterialCommunityIcons name="heart-pulse" size={24} color="#6200EE" />
-            <ThemedText style={styles.label}>Health Status</ThemedText>
+            <MaterialCommunityIcons name="silverware-fork-knife" size={24} color="#6200EE" />
+            <ThemedText style={styles.label}>Cuisine Type</ThemedText>
           </View>
           <Pressable 
-            style={styles.selectButton}
-            onPress={() => setHealthModalVisible(true)}
+            style={[styles.selectButton, !enableEditing && styles.disabledButton]}
+            onPress={() => enableEditing && setCuisineModalVisible(true)}
           >
             <ThemedText style={styles.selectButtonText}>
-              {healthStatus ? healthOptions.find(opt => opt.value === healthStatus)?.label : 'Select status'}
+              {cuisineType ? cuisineOptions.find(opt => opt.value === cuisineType)?.label : 'Select cuisine'}
             </ThemedText>
             <MaterialCommunityIcons name="chevron-down" size={24} color="#666" />
           </Pressable>
         </Animated.View>
 
-        {/* Vegan Switch Card */}
-        <Animated.View entering={FadeInUp.delay(500).springify()} style={[styles.card, styles.switchCard]}>
-          <View style={styles.switchContainer}>
-            <View style={styles.labelContainer}>
-              <MaterialCommunityIcons name="leaf" size={24} color="#6200EE" />
-              <ThemedText style={styles.switchLabel}>Vegan Diet</ThemedText>
-            </View>
-            <Switch
-              value={isVegan}
-              onValueChange={setIsVegan}
-              trackColor={{ false: '#767577', true: '#a668ee' }}
-              thumbColor={isVegan ? '#6200EE' : '#f4f3f4'}
+        {/* Duration Card */}
+        <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.card}>
+          <View style={styles.labelContainer}>
+            <MaterialCommunityIcons name="calendar-clock" size={24} color="#6200EE" />
+            <ThemedText style={styles.label}>Duration</ThemedText>
+          </View>
+          <View style={styles.durationContainer}>
+            <TextInput
+              style={[styles.input, !enableEditing && styles.disabledInput]}
+              keyboardType="numeric"
+              placeholder="Enter number of days"
+              value={duration}
+              onChangeText={setDuration}
+              placeholderTextColor="#999"
+              editable={enableEditing}
             />
+            <ThemedText style={styles.durationUnit}>days</ThemedText>
           </View>
         </Animated.View>
 
@@ -121,7 +186,7 @@ export default function GoalScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <ThemedText style={styles.buttonText}>Save Goals</ThemedText>
+              <ThemedText style={styles.buttonText}>{enableEditing ? 'Save Golal' : 'Update Goals'}</ThemedText>
             </LinearGradient>
           </Pressable>
         </Animated.View>
@@ -162,34 +227,33 @@ export default function GoalScreen() {
         </View>
       </Modal>
 
-      {/* Similar Modal for Health Status */}
       <Modal
-        isVisible={isHealthModalVisible}
-        onBackdropPress={() => setHealthModalVisible(false)}
+        isVisible={isCuisineModalVisible}
+        onBackdropPress={() => setCuisineModalVisible(false)}
         style={styles.modal}
         backdropTransitionOutTiming={0}
       >
         <View style={styles.modalContent}>
-          <ThemedText style={styles.modalHeader}>Select Health Status</ThemedText>
-          {healthOptions.map((option) => (
+          <ThemedText style={styles.modalHeader}>Select Cuisine Type</ThemedText>
+          {cuisineOptions.map((option) => (
             <Pressable
               key={option.value}
               style={[
                 styles.modalOption,
-                healthStatus === option.value && styles.selectedOption
+                cuisineType === option.value && styles.selectedOption
               ]}
               onPress={() => {
-                setHealthStatus(option.value);
-                setHealthModalVisible(false);
+                setCuisineType(option.value);
+                setCuisineModalVisible(false);
               }}
             >
               <ThemedText style={[
                 styles.modalOptionText,
-                healthStatus === option.value && styles.selectedOptionText
+                cuisineType === option.value && styles.selectedOptionText
               ]}>
                 {option.label}
               </ThemedText>
-              {healthStatus === option.value && (
+              {cuisineType === option.value && (
                 <MaterialCommunityIcons name="check" size={24} color="#6200EE" />
               )}
             </Pressable>
@@ -334,5 +398,36 @@ const styles = StyleSheet.create({
   selectedOptionText: {
     color: '#6200EE',
     fontWeight: '600',
+  },
+  weightInputContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  weightInput: {
+    flex: 1,
+  },
+  weightLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  durationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  durationUnit: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 8,
+  },
+  disabledInput: {
+    backgroundColor: '#f0f0f0',
+    color: '#666',
+  },
+  disabledButton: {
+    backgroundColor: '#f0f0f0',
+    opacity: 0.7,
   },
 });

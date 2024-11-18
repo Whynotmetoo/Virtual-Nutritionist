@@ -3,6 +3,7 @@ import { StyleSheet, TouchableOpacity, View, Image, ScrollView } from 'react-nat
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -27,12 +28,6 @@ const menuItems = [
     color: '#FF6D00',
   },
   {
-    id: 'payment',
-    title: 'Payment Methods',
-    icon: 'credit-card',
-    color: '#2962FF',
-  },
-  {
     id: 'privacy',
     title: 'Privacy Settings',
     icon: 'eye-settings',
@@ -51,15 +46,16 @@ const menuItems = [
     color: '#304FFE',
   },
   {
-    id: 'delete',
-    title: 'Delete Account',
-    icon: 'delete',
+    id: 'logout',
+    title: 'Logout',
+    icon: 'logout',
     color: '#D50000',
   },
 ];
 
 export default function AccountScreen() {
   const [userImage, setUserImage] = useState(null);
+  const insets = useSafeAreaInsets();
 
   return (
     <ThemedView style={styles.container}>
@@ -76,7 +72,7 @@ export default function AccountScreen() {
             colors={['#6200EE', '#9747FF']}
             style={styles.headerGradient}
           >
-            <View style={styles.profileImageContainer}>
+            <View style={[styles.profileImageContainer, { paddingTop: insets.top }]}>
               {userImage ? (
                 <Image source={{ uri: userImage }} style={styles.profileImage} />
               ) : (
@@ -175,7 +171,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFF',
-    padding: 16,
+    padding: 12,
     borderRadius: 12,
     marginBottom: 12,
     shadowColor: '#000',
