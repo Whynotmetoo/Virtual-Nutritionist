@@ -123,6 +123,12 @@ export default function VirtualNutritionistChat() {
             <ThemedText style={styles.headerTitle}>AI Nutritionist</ThemedText>
             <ThemedText style={styles.headerSubtitle}>Online</ThemedText>
           </View>
+          <TouchableOpacity 
+            style={styles.clearButton} 
+            onPress={() => setMessages([])}
+          >
+            <Ionicons name="trash-outline" size={22} color="#fff" />
+          </TouchableOpacity>
         </View>
       </LinearGradient>
 
@@ -194,8 +200,10 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   headerTextContainer: {
+    flex: 1,
     marginLeft: 12,
   },
   headerTitle: {
@@ -315,5 +323,8 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#666',
     fontStyle: 'italic',
+  },
+  clearButton: {
+    padding: 8,
   },
 });
