@@ -17,28 +17,10 @@ const menuItems = [
     color: '#6200EE',
   },
   {
-    id: 'security',
-    title: 'Security Settings',
-    icon: 'shield-lock',
-    color: '#00BFA5',
-  },
-  {
-    id: 'notifications',
-    title: 'Notifications',
-    icon: 'bell',
-    color: '#FF6D00',
-  },
-  {
     id: 'privacy',
     title: 'Privacy Settings',
     icon: 'eye-settings',
     color: '#C51162',
-  },
-  {
-    id: 'help',
-    title: 'Help & Support',
-    icon: 'help-circle',
-    color: '#00C853',
   },
   {
     id: 'about',

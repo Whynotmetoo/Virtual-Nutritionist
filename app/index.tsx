@@ -10,7 +10,7 @@ export default function LoginScreen() {
   const router = useRouter();
 
   const handleLogin = () => {
-    router.replace('/(tabs)');
+    setTimeout(() => router.replace('/(tabs)'), 1000)
   };
 
   return (
