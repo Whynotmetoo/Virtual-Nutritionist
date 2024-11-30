@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 
 # import os
-from ..dependencies import connect_to_db
+from ..dependencies import connect_to_db, is_same_day
 
 from ..dependencies import get_token_header
 
@@ -17,9 +17,11 @@ client = OpenAI()
 
 database = connect_to_db()
 preference = "preference"
+chats = "chats"
 if preference not in database.list_collection_names():
     database.create_collection(preference)
 collection = database[preference]
+chats_collection = database[chats]
 
 router = APIRouter(
     prefix="/preference",
@@ -51,6 +53,7 @@ async def getGoal():
 
 @router.post('/save')
 async def chat_current(data: preference_data):
+    date = datetime.now().timestamp()
     current_preference = collection.find_one(sort=[("date", -1)])
     date = datetime.now().timestamp()
     
@@ -60,4 +63,7 @@ async def chat_current(data: preference_data):
         collection.insert_one({"date": date, "data": data_dict})
     else:
         collection.update_one({"date": current_preference["date"]}, {"$set": {"data": data_dict}})
+    latest_chat= chats_collection.find_one(sort=[("date", -1)])
+    if latest_chat is not None and is_same_day(date, latest_chat['date']) and latest_chat['active']:
+        chats_collection.update_one({"date": latest_chat['date']},{"$set": {"active": False}})
     return True

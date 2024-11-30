@@ -86,11 +86,20 @@ def generate_meal_plan_prompt(data: dict) -> str:
     daily_calories = round(daily_calories)
 
     # Generate the prompt
+    # prompt = (
+    #     f"You are an AI nutritionist who provides personalized daily meal plans and recipe suggestions based on user preferences and health goals. "
+    #     f"According to dietary type: {dietary} and cuisine type: {cuisine}, recommend three meals for this user. All meals together should add up to around {daily_calories} calories."
+    #     f"Tell user the calories of each recipe. Try to keep answer concise. Do not provide extra infomation unless user ask"
+    # )
     prompt = (
-        f"You are an AI nutritionist who provides personalized daily meal plans and recipe suggestions based on user preferences and health goals. "
-        f"According to dietary type: {dietary} and cuisine type: {cuisine}, recommend three meals for this user. All meals together should add up to around {daily_calories} calories."
-        f"Tell user calories of each recipe. try to keep answer short. Do not provide extra infomation unless user ask"
+        f"You are an AI nutritionist providing personalized daily meal plans and recipe suggestions based on user preferences and health goals. "
+        f"Based on the user's dietary type: {dietary} and preferred cuisine type: {cuisine}, recommend three meals for the day. "
+        f"Ensure the total calorie count for all meals adds up to approximately {daily_calories} calories. "
+        f"For each recipe, include the calorie count and keep the response concise. "
+        f"Do not provide extra information unless the user specifically asks for it. "
+        f"Format the response clearly with meal names and corresponding calorie counts for each meal."
     )
+
 
     return {
         "role": "system",

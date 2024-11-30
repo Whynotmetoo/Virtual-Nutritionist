@@ -44,16 +44,16 @@ except Exception as e:
     logger.error("Error connecting to MongoDB: %s", e)
 
 app.include_router(user.router)
-app.include_router(items.router)
+# app.include_router(items.router)
 app.include_router(chat.router)
 app.include_router(preference.router)
-app.include_router(
-    admin.router,
-    prefix="/admin",
-    tags=["admin"],
-    dependencies=[Depends(get_token_header)],
-    responses={418: {"description": "I'm a teapot"}},
-)
+# app.include_router(
+#     admin.router,
+#     prefix="/admin",
+#     tags=["admin"],
+#     dependencies=[Depends(get_token_header)],
+#     responses={418: {"description": "I'm a teapot"}},
+# )
 
 @app.get("/")
 async def root():

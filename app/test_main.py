@@ -11,7 +11,7 @@ def test_index_path():
     assert response.json() == {"message": "Hello Bigger Applications!"}
 
 def test_chat_path():
-    response = client.get('/chat/test')
+    response = client.get('/chat/ping')
     assert response.status_code == 200
     assert response.json() == "the recipe of today"
 

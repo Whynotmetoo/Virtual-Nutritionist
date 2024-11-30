@@ -45,22 +45,20 @@ class Message(BaseModel):
     role: str
     content: str
 
-@router.get("/test")
+@router.get("/ping")
 async def chat_test():
     return "the recipe of today"
 
 
 @router.post('/current')
 async def chat_current(message: Message):
-    lastest_chat = collection.find_one(sort=[("date", -1)])
+    latest_chat = collection.find_one(sort=[("date", -1)])
     date = datetime.now().timestamp()
     
     message_dict = message.model_dump()
     
-    if lastest_chat is None or not is_same_day(date, lastest_chat['date']):
+    if latest_chat is None or not is_same_day(date, latest_chat['date']) or not latest_chat['active']:
         current_preference = preference_collection.find_one(sort=[("date", -1)])
-        # if (current_preference):
-        #     current_preference.pop("_id", None)
         logger.info(current_preference['data'])
         prompt = generate_meal_plan_prompt(current_preference['data'])
         logger.info([prompt, message_dict])
@@ -70,12 +68,12 @@ async def chat_current(message: Message):
         )
         response_content = response.choices[0].message.content
         record = [prompt, message_dict, {"role": "assistant", "content": response_content}]
-        collection.insert_one({"date": date, "records": record})
+        collection.insert_one({"date": date, "records": record, "active": True})
         return response_content
     else:
         # Flatten the records array and append new message
         messages = []
-        for record in lastest_chat['records']:
+        for record in latest_chat['records']:
             if isinstance(record, list):
                 messages.extend(record)  # If record is a list, extend messages with its contents
             else:
@@ -88,5 +86,5 @@ async def chat_current(message: Message):
         )
         response_content = response.choices[0].message.content
         record = [message_dict, {"role": "assistant", "content": response_content}]
-        collection.update_one({"date": lastest_chat['date']}, {"$push": {"records": {"$each": record}}})
+        collection.update_one({"date": latest_chat['date']}, {"$push": {"records": {"$each": record}}})
         return response_content
